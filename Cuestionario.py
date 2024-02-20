@@ -1,7 +1,3 @@
-from importlib.resources import contents
-from msilib.schema import File
-from re import sub
-from tkinter import Image
 from kivy.app import App
 from kivy.utils import get_hex_from_color as unhex
 from kivy.utils import get_color_from_hex as hexed
@@ -19,9 +15,8 @@ from kivy.uix.screenmanager import ScreenManager, Screen, FadeTransition
 from kivy.properties import StringProperty, ObjectProperty
 from kivy.core.audio import SoundLoader
 from kivy.core.window import Window
-from kivy.factory import Factory
 from kivy.core.text import LabelBase
-from kivy.uix.filechooser import FileChooser, FileChooserIconView
+from kivy.uix.filechooser import FileChooserIconView
 from recursos.data.lector import Modificacion_BDD
 import random, os
 
