@@ -5,7 +5,6 @@ import pandas as pd
 class Modificacion_BDD():
 #si una variable es colocada fuera del init, puede estar sin "self"
 #si está dentro del init, si o si debe tener "self." unido
-    #archivo = 
     with open("recursos/data/preguntas.json", "rb") as file:
         obj:list = json.load(file)
         
@@ -14,7 +13,7 @@ class Modificacion_BDD():
         for x in self.obj:
             self.temas.append(x["tema"])
 
-    def traducir_excel(self, ruta:str="recursos/data/preguntas_mini.xlsx"):
+    def traducir_excel(self, ruta:str="recursos/data/preguntas_mini.xlsx"): #probado
         """
         Función especifica para leer un excel, transformarlo en .JSON y ahorrar trabajo [EXPERIMENTAL]
         """
@@ -40,27 +39,20 @@ class Modificacion_BDD():
                         a["preguntas"].append(pregunta)
                         break
                 else:
-                    pass#print("tema no coincidente")
+                    pass
 
         print(self.obj)
         with open("recursos/data/preguntas.json", "w") as file:
-            json.dump(self.obj, file)
-        #print(segmento)  
+            json.dump(self.obj, file) 
 
-    def preguntasDelTema(self, tema):
+    def preguntasDelTema(self, tema): #probado
         """
         Función para recuperar las preguntas asignadas a un tema del .JSON
         """
-        #listado = {}
-        #listado_respondido = {}
         listado_esp = []
         for a in self.obj:
             if a["tema"] == tema:
-                #for b in a["preguntas"]:
-                    #listado[b["pregunta"]] = b["respuestas"]
-                    #listado_respondido[b["pregunta"]] = b["respuesta_correcta"]
                 listado_esp = a["preguntas"]
-        #return listado, listado_respondido
         return listado_esp
 
     def agregar_tema(self, tema): #probado
@@ -108,8 +100,8 @@ class Modificacion_BDD():
                         for beta in pregunta_new.keys():
                             a[beta] = pregunta_new[beta]
                             print(a)
-                    break
-            break
+                        break
+                break
         with open("preguntas.json", "w") as file:
                     json.dump(self.obj, file)
 
@@ -121,7 +113,8 @@ class Modificacion_BDD():
                         alpha["preguntas"].remove(beta)
                         with open("preguntas.json", "w") as file:
                             json.dump(self.obj, file)
-                break
+                    break
+            break
 
 if __name__ == "__main__":
     Modificacion_BDD().traducir_excel()

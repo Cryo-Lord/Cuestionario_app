@@ -30,14 +30,14 @@ LabelBase.register(name="rubik",fn_regular="recursos/fonts/Rubik/Rubik-Regular.t
 #Experimento logrado: que se grabe el botón coloreado y la pregunta para comparar
 #Experimento logrado: iterar creación de widgets con distintas funciones
 #Experimento logrado: colocar una imagen de fondo que se adapte a la ventana
-#Experimento: Lograr cargar un archivo de con FileChooser y que lea su excel
+#Experimento logrado: Lograr cargar un archivo de con FileChooser y que lea su excel
 
 BDD = Modificacion_BDD()
 
 def adapt_text_size(widget):
     screen_res = [win32api.GetSystemMetrics(0),win32api.GetSystemMetrics(1)]
     text_size = []
-    text_size.append((widget.size_hint[0]-0.02)*screen_res[0])
+    text_size.append((widget.size_hint[0]-0.01)*screen_res[0])
     return int(text_size[0])
 
 def pophexed(hex_color:str):
@@ -47,6 +47,11 @@ def pophexed(hex_color:str):
         result.append(7*a)
     return result
 
+class Add_question(Popup):
+    added_widget = []
+    def __init__(self, kwargs):
+        pass
+    pass
 class File_explorer(Popup):
     def __init__(self, **kwargs):
         super(File_explorer, self).__init__(**kwargs)
@@ -88,7 +93,6 @@ class File_explorer(Popup):
             self.direction.text = str(self.fichero.selection[0])
         return super().on_touch(touch)
     
-
 class CRUD(Screen):
 
     def gestionar(self, widget):
@@ -399,12 +403,6 @@ class Quizz(Screen):
                    pos_hint={"right":1})
 
     def resize(self, widget, text):
-        print(widget.size)
-        print(widget.text_size) #este tamaño determina que tanto se expande el texto de manera [horizontal, vertical]
-        print(widget.font_size) #tamaño del botón
-        print(text) #texto de la respuesta
-        print(len(text)) #longitud de la respuesta
-        #widget.text_size = (widget.width,None)
         if len(text)>250:
             widget.font_size -= (len(text)-250)/3
         else:
