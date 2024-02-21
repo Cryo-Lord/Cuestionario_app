@@ -18,7 +18,7 @@ from kivy.core.window import Window
 from kivy.core.text import LabelBase
 from kivy.uix.filechooser import FileChooserIconView
 from recursos.data.lector import Modificacion_BDD
-import random, os
+import random, os, win32api
 
 LabelBase.register(name="rubik",fn_regular="recursos/fonts/Rubik/Rubik-Regular.ttf")
 
@@ -33,6 +33,12 @@ LabelBase.register(name="rubik",fn_regular="recursos/fonts/Rubik/Rubik-Regular.t
 #Experimento: Lograr cargar un archivo de con FileChooser y que lea su excel
 
 BDD = Modificacion_BDD()
+
+def adapt_text_size(widget):
+    screen_res = [win32api.GetSystemMetrics(0),win32api.GetSystemMetrics(1)]
+    text_size = []
+    text_size.append((widget.size_hint[0]-0.02)*screen_res[0])
+    return int(text_size[0])
 
 def pophexed(hex_color:str):
     cal = hexed(hex_color)
@@ -95,9 +101,9 @@ class CRUD(Screen):
         lower.add_widget(accion)
         lower.add_widget(salir)
         salir.bind(on_press=popup.dismiss)
-        if "Temas" == widget.text:
+        if "Temas Agregar" == widget.text or "Temas Buscar" == widget.text:
             tantrum.add_widget(Label(text="Ingrese el tema", size_hint=[None,0.3]))
-            getter = TextInput(size_hint_y=(None, 0.1))
+            getter = TextInput(size_hint=(None, 0.1))
             tantrum.add_widget(getter)
             if "Agregar" in widget.text:
                 accion.text = "Ingresar"
@@ -130,7 +136,21 @@ class CRUD(Screen):
             if "Agregar" in widget.text:
                 pass
             elif "Buscar" in widget.text:
-                pass
+                getter = TextInput(size_hint=(None, 0.1))
+                accion.text = "Buscar"
+                encuentro = Label(text="...Esperando ingreso...")
+                tantrum.add_widget(encuentro)
+                def función_prep(*args):
+                    coincidencias = []
+                    temas = Modificacion_BDD().preguntasDelTema(selector.text)
+                    for a in temas:
+                        if getter.text in a:
+                            coincidencias.append(a)
+                    if coincidencias.count == 0 or getter.text == "":
+                        encuentro.text= "Coincdencias: 0"
+                    else:    
+                        encuentro.text = "Encontrados: \n" + ",\n".join(coincidencias)
+                getter.bind(text=función_prep)
             elif "Modificar" in widget.text:
                 pass
             elif "Eliminar" in widget.text:
@@ -218,7 +238,7 @@ class Menu(Screen):
         self.elegido = []
         for a in self.temas:
             boton = Button(text="{}".format(a), color=hexed("#6644ff"), background_normal="", background_color=hexed("#ffbb33"),
-                           size_hint=[1, None], height="60dp")
+                           size_hint=[1, None], height="90dp")
             boton.bind(on_release=self.pintar)
             self.elegidor_tema.add_widget(boton)
             self.elegido.append(boton)
@@ -383,8 +403,11 @@ class Quizz(Screen):
         print(widget.font_size) #tamaño del botón
         print(text) #texto de la respuesta
         print(len(text)) #longitud de la respuesta
+        #widget.text_size = (widget.width,None)
         if len(text)>250:
             widget.font_size -= (len(text)-250)/3
+        else:
+            widget.font_size = "40dp"
         
     def __init__(self, **kwargs):
         super(Quizz, self).__init__(**kwargs)
@@ -401,12 +424,13 @@ class Quizz(Screen):
         self.tepts = []
         for i in range(3):
             self.label = Button(text="{}".format(i), color=hexed("#6644ff"), background_normal="", background_color=hexed("#ffbb33"),
-                                size_hint=[.9,.8], font_size="40dp", halign="center", pos_hint={"center_x":.5}, text_size=(1700,None))
+                                size_hint=[.9,.8], font_size="40dp", halign="center", pos_hint={"center_x":.5}) #los enteros representan a los pixeles
             #self.label.bind(width=lambda *x: self.label.setter('text_size')(self.label, (self.label.width, None)))
+            self.label.text_size = (adapt_text_size(self.label),None)
             self.label.bind(text=self.resize)
             self.label.bind(on_release=self.pintar)
             self.tepts.append(self.label)
-            self.caja_respuestas.add_widget(self.label)
+            self.caja_respuestas.add_widget(self.label)  
         self.checkup = None
         self.obtain = None
         self.progreso = ProgressBar(size_hint=["0.7",".2"], pos_hint={"center_x":.5})
