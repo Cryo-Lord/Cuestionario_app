@@ -238,12 +238,12 @@ class Menu(Screen):
         parent.add_widget(AsyncImage(source="recursos/img/Emerson-01.png", size=["70dp","70dp"]))
         
         caja_tema = BoxLayout(orientation="vertical", size_hint=[.9, .9], pos_hint={"center_x":.5})
-        titulo_tema = Label(text="Elija su tema:", color=hexed("#000066"), size_hint=[1,.2], font_size="15dp")
+        titulo_tema = Label(text="Elija su tema:", color=hexed("#000066"), size_hint=[1,.2], font_size="30dp")
         self.elegidor_tema = GridLayout(cols=3, spacing="5dp")
         self.elegido = []
         for a in self.temas:
             boton = Button(text="{}".format(a), color=hexed("#6644ff"), background_normal="", background_color=hexed("#ffbb33"),
-                           size_hint=[1, None], height="90dp")
+                           size_hint=[1, None], height="90dp", font_size="40dp")
             boton.bind(on_release=self.pintar)
             self.elegidor_tema.add_widget(boton)
             self.elegido.append(boton)
@@ -254,14 +254,14 @@ class Menu(Screen):
         
         iniciar = Button(text="Iniciar Concurso", 
                          background_color=hexed("#0053cc"), color=hexed("#00e6bf"), background_normal="", 
-                         size_hint=[.7, None], pos_hint={"center_x":0.5})
+                         size_hint=[.7, None], pos_hint={"center_x":0.5}, font_size="40dp")
         iniciar.bind(on_release=self.refresh_plus)
         salir = Button(text="Salir", 
                        background_color=hexed("#0053cc"), color=hexed("#00e6bf"), background_normal="", 
-                       size_hint=[.7,None], pos_hint={"center_x":0.5})
+                       size_hint=[None,None], pos_hint={"center_x":0.5}, size=["120dp","60dp"], font_size="40dp")
         salir.bind(on_release= CuestionarioApp.salir)
         parent.add_widget(iniciar)
-        parent.add_widget(salir)
+        sup.add_widget(salir)
         self.add_widget(Image(source="recursos/img/fondos/Fondo.png", fit_mode="fill"))
         self.add_widget(parent) 
 
@@ -291,11 +291,9 @@ class Menu(Screen):
         for a in self.elegido:
             if a.color == hexed("#ffbb33"):
                 patata = a.text
-        ##################### Problema solucinado ######################
         preguntas = []
         preguntas.extend(BDD.preguntasDelTema(patata))
         random.shuffle(preguntas)
-        ################################################################
         try:
             App.get_running_app().managersc.get_screen(name="quizz").titulo.text = preguntas[0]["pregunta"]
             App.get_running_app().managersc.get_screen(name="quizz").progreso.max = len(preguntas)
@@ -434,7 +432,7 @@ class Quizz(Screen):
         self.obtain = None
         self.progreso = ProgressBar(size_hint=["0.7",".2"], pos_hint={"center_x":.5})
         enviar = Button(text="¿Estas seguro(a)?", background_normal="", background_color=hexed("#dceb00"), color=hexed("#6644ff"),
-                        size_hint=[None,None], size=["200dp","60dp"],
+                        size_hint=[None,None], size=["200dp","60dp"], font_size="50dp",
                           pos_hint={"center_x":.5,"center_y":.5})
         enviar.bind(on_press=self.next_plus)
         parent.add_widget(self.titulo)
