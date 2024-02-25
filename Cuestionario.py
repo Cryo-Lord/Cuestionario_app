@@ -96,6 +96,11 @@ class File_explorer(Popup):
 class CRUD(Screen):
 
     def gestionar(self, widget):
+        """
+        Este es el widget más complejo de toda la app, contiene 8 popups en su interior; un movimiento en falso y puede darte interrminables
+        errores, dependiendo del widget que llame esta función se ejecutara de diferentes maneras, identifica el widget gracias a su posición
+        en la lista "widgets"
+        """
         popup = Popup(size_hint=[None, .8],width=500)
         popup.title = widget.text
         tantrum = BoxLayout(orientation="vertical")
@@ -105,16 +110,16 @@ class CRUD(Screen):
         lower.add_widget(accion)
         lower.add_widget(salir)
         salir.bind(on_press=popup.dismiss)
-        if "Temas Agregar" == widget.text or "Temas Buscar" == widget.text:
+        if self.widgets[0] == widget or self.widgets[1] == widget:
             tantrum.add_widget(Label(text="Ingrese el tema", size_hint=[None,0.3]))
             getter = TextInput(size_hint=(None, 0.1))
             tantrum.add_widget(getter)
-            if "Agregar" in widget.text:
+            if self.widgets[0] == widget: # Añadir tema - programado - probado
                 accion.text = "Ingresar"
                 def función(*args):
                     Modificacion_BDD().agregar_tema(getter.text)
                     popup.dismiss()
-            elif "Buscar" in widget.text:
+            elif self.widgets[1] == widget: # Buscar tema - programado - probado
                 accion.text = "Buscar"
                 encuentro = Label(text="...Esperando ingreso...")
                 tantrum.add_widget(encuentro)
@@ -137,9 +142,21 @@ class CRUD(Screen):
                                 size_hint=[.5,None], height="30dp",sync_height=True,
                                 pos_hint={"center_x":.5})
             tantrum.add_widget(selector)
-            if "Agregar" in widget.text:
-                pass
-            elif "Buscar" in widget.text:
+            if self.widgets[2] == widget: #Modificar tema - programado - no probado
+                getter = TextInput(size_hint=(None,0.1))
+                action = Button(text="Modificar")
+                tantrum.add_widget(getter)
+                tantrum.add_widget(action)
+                def modif():
+                    BDD.editar_tema(selector.text, getter.text)
+                action.bind(on_release=modif)
+            elif self.widgets[3] == widget: #Eliminar tema - En espera
+                action = Button(text="Eliminar")
+                tantrum.add_widget(action)
+                def elimi():
+                    BDD.borrar_tema(selector)
+                action.bind(on_release=elimi)
+            elif self.widgets[5] == widget:  #Buscar preguntas - en proceso
                 getter = TextInput(size_hint=(None, 0.1))
                 accion.text = "Buscar"
                 encuentro = Label(text="...Esperando ingreso...")
@@ -254,7 +271,7 @@ class Menu(Screen):
         
         iniciar = Button(text="Iniciar Concurso", 
                          background_color=hexed("#0053cc"), color=hexed("#00e6bf"), background_normal="", 
-                         size_hint=[.7, None], pos_hint={"center_x":0.5}, font_size="40dp")
+                         size_hint=[.4, None], pos_hint={"center_x":0.5}, font_size="40dp")
         iniciar.bind(on_release=self.refresh_plus)
         salir = Button(text="Salir", 
                        background_color=hexed("#0053cc"), color=hexed("#00e6bf"), background_normal="", 
