@@ -19,6 +19,7 @@ from kivy.core.text import LabelBase
 from kivy.uix.filechooser import FileChooserIconView
 from recursos.data.lector import Modificacion_BDD
 import random, os, win32api
+import inspect
 
 LabelBase.register(name="rubik",fn_regular="recursos/fonts/Rubik/Rubik-Regular.ttf")
 
@@ -48,18 +49,43 @@ def pophexed(hex_color:str):
     return result
 
 class Add_question(Popup):
-    added_widget = []
-    def __init__(self, kwargs):
-        pass
-    pass
-class File_explorer(Popup):
+    current_frame = inspect.currentframe()
+    callframe = inspect.getouterframes(current_frame, 2)
+    father = callframe[1][3]
+    print(type(father))
+    widgets = []
+    def __init__(self, **kwargs):
+        super(Add_question,self).__init__(**kwargs)
+
+        mainframe = BoxLayout(orientation="vertical", padding="5dp")
+        question_label = Label(text="Ingrese los datos")
+        question_set = Label(text="Ingrese su pregunta")
+        question = TextInput()
+        mainframe.add_widget(question_label)
+        mainframe.add_widget(question_set)
+        mainframe.add_widget(question)
+        text = ["A", "B", "C"]
+        answers_box = GridLayout(cols=2)
+        mainframe.add_widget(answers_box)
+        for a in text:
+            label = Label(text=a, size_hint=[.5,None])
+            answer = TextInput()
+            answers_box.add_widget(label)
+            answers_box.add_widget(answer)
+            self.widgets.append(answer)
+        action = Button(text="Guardar")
+        salir = Button(text="Cancelar", on_release=self.dismiss)
+        answers_box.add_widget(action)
+        answers_box.add_widget(salir)
+        self.add_widget(mainframe)
+class File_explorer(Popup): #Explorador de archivos - Se debe corregir el tamaño
     def __init__(self, **kwargs):
         super(File_explorer, self).__init__(**kwargs)
 
         mainframe = BoxLayout(orientation="vertical", padding="5dp")
         self.direction = TextInput(size_hint=[1,None],height="30dp")
         self.direction.bind(text=self.actual_path)
-        self.fichero = FileChooserIconView(size_hint=[1,1], dirselect=True)
+        self.fichero = FileChooserIconView(size_hint=[1,2.5], dirselect=True) # Se cambio el sector Y por 2
         self.fichero.path = os.path.expanduser("~\\Onedrive\\Desktop")
         self.fichero.bind(selection=self.selected_path)
         subframe = BoxLayout()
@@ -73,7 +99,6 @@ class File_explorer(Popup):
         mainframe.add_widget(self.fichero)
         mainframe.add_widget(subframe)
         self.add_widget(mainframe)
-        return
     
     def actual_path(self, widget, text):
         self.fichero.path = text
@@ -111,8 +136,8 @@ class CRUD(Screen):
         lower.add_widget(salir)
         salir.bind(on_press=popup.dismiss)
         if self.widgets[0] == widget or self.widgets[1] == widget:
-            tantrum.add_widget(Label(text="Ingrese el tema", size_hint=[None,0.3]))
-            getter = TextInput(size_hint=(None, 0.1))
+            tantrum.add_widget(Label(text="Ingrese el tema", size_hint=[None,0.3], halign="center"))
+            getter = TextInput(size_hint=(None, 0.1), halign="center")
             tantrum.add_widget(getter)
             if self.widgets[0] == widget: # Añadir tema - programado - probado
                 accion.text = "Ingresar"
@@ -133,7 +158,7 @@ class CRUD(Screen):
                         encuentro.text= "Coincdencias: 0"
                     else:    
                         encuentro.text = "Encontrados: \n" + ",\n".join(coincidencias)
-            accion.bind(on_release=función)
+            getter.bind(text=función)
             popup.content = tantrum
         else:
             temas = BDD.temas
@@ -143,22 +168,22 @@ class CRUD(Screen):
                                 pos_hint={"center_x":.5})
             tantrum.add_widget(selector)
             if self.widgets[2] == widget: #Modificar tema - programado - no probado
-                getter = TextInput(size_hint=(None,0.1))
-                action = Button(text="Modificar")
+                getter = TextInput(size_hint=(None,0.1), halign="center")
+                accion.text="Modificar"
                 tantrum.add_widget(getter)
-                tantrum.add_widget(action)
                 def modif():
                     BDD.editar_tema(selector.text, getter.text)
-                action.bind(on_release=modif)
-            elif self.widgets[3] == widget: #Eliminar tema - En espera
-                action = Button(text="Eliminar")
-                tantrum.add_widget(action)
+                accion.bind(on_release=modif)
+            elif self.widgets[3] == widget: #Eliminar tema - Programado - No probado
+                accion.text="Eliminar"
                 def elimi():
-                    BDD.borrar_tema(selector)
-                action.bind(on_release=elimi)
+                    BDD.borrar_tema(selector.text)
+                accion.bind(on_release=elimi)
+            elif self.widgets[4] == widget:
+                Add_question(size_hint=[None,None], size=[500,700]).open()
             elif self.widgets[5] == widget:  #Buscar preguntas - en proceso
                 getter = TextInput(size_hint=(None, 0.1))
-                accion.text = "Buscar"
+                accion.text = "Detalles"
                 encuentro = Label(text="...Esperando ingreso...")
                 tantrum.add_widget(encuentro)
                 def función_prep(*args):
@@ -176,6 +201,7 @@ class CRUD(Screen):
                 pass
             elif "Eliminar" in widget.text:
                 pass
+            popup.content = tantrum
 
         tantrum.add_widget(lower)
         popup.open()
@@ -449,9 +475,10 @@ class Quizz(Screen):
         self.obtain = None
         self.progreso = ProgressBar(size_hint=["0.7",".2"], pos_hint={"center_x":.5})
         enviar = Button(text="¿Estas seguro(a)?", background_normal="", background_color=hexed("#dceb00"), color=hexed("#6644ff"),
-                        size_hint=[None,None], size=["200dp","60dp"], font_size="50dp",
+                        size_hint=[.5,.2], font_size="50dp",
                           pos_hint={"center_x":.5,"center_y":.5})
         enviar.bind(on_press=self.next_plus)
+        enviar.bind(text=self.resize)
         parent.add_widget(self.titulo)
         parent.add_widget(self.caja_respuestas)
         parent.add_widget(self.progreso)
