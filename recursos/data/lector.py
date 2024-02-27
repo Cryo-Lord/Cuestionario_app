@@ -5,13 +5,16 @@ import pandas as pd
 class Modificacion_BDD():
 #si una variable es colocada fuera del init, puede estar sin "self"
 #si está dentro del init, si o si debe tener "self." unido
-    with open("recursos/data/preguntas.json", "rb") as file:
-        obj:list = json.load(file)
-        
-    def __init__(self) -> None:
+    obj = None
+    def reload(self):
         self.temas = []
+        with open("recursos/data/preguntas.json", "rb") as file:
+            self.obj = json.load(file)
         for x in self.obj:
             self.temas.append(x["tema"])
+        
+    def __init__(self) -> None:
+        self.reload()        
 
     def traducir_excel(self, ruta:str="recursos/data/preguntas_mini.xlsx"): #probado
         """
@@ -58,35 +61,37 @@ class Modificacion_BDD():
     def agregar_tema(self, tema): #probado
         data = {"tema":tema, "preguntas":[]}
         self.obj.append(data)
-        with open("preguntas.json", "w") as file:
+        print(data)
+        with open("recursos/data/preguntas.json", "w") as file:
             json.dump(self.obj, file)
-        print(self.obj)
+        self.reload()
 
     def editar_tema(self, tema, tema_new): #probado
         for alpha in self.obj:
             if alpha["tema"] == tema:
                 alpha["tema"] = tema_new
-        with open("preguntas.json", "w") as file:
+        with open("recursos/data/preguntas.json", "w") as file:
             json.dump(self.obj, file)
-        print(self.obj)
+        self.reload()
 
     def borrar_tema(self, tema): #probado
         for alpha in self.obj:
             if alpha["tema"] == tema:
                 self.obj.remove(alpha)
                 break
-        with open("preguntas.json", "w") as file:
+        with open("recursos/data/preguntas.json", "w") as file:
                             json.dump(self.obj, file)
-        print(self.obj)
+        self.reload()
 
     def agregar_pregunta(self, tema:str, pregunta:dict): #probado
         for alpha in self.obj:
             if alpha["tema"] == tema:
                 alpha["preguntas"].append(pregunta)
-                with open("preguntas.json", "w") as file:
+                with open("recursos/data/preguntas.json", "w") as file:
                     json.dump(self.obj, file)
                 print(self.obj)
                 break
+        self.reload()
     
     def editar_pregunta(self, tema:str, pregunta:str, pregunta_new:dict):
         for alpha in self.obj: #revisa cada elemento de la base de datos
@@ -102,7 +107,7 @@ class Modificacion_BDD():
                             print(a)
                         break
                 break
-        with open("preguntas.json", "w") as file:
+        with open("recursos/data/preguntas.json", "w") as file:
                     json.dump(self.obj, file)
 
     def borrar_pregunta(self, tema:str, pregunta:str): #probado
@@ -111,10 +116,10 @@ class Modificacion_BDD():
                 for beta in alpha["preguntas"]:
                     if beta["pregunta"] == pregunta:
                         alpha["preguntas"].remove(beta)
-                        with open("preguntas.json", "w") as file:
+                        with open("recursos/data/preguntas.json", "w") as file:
                             json.dump(self.obj, file)
                     break
             break
 
 if __name__ == "__main__":
-    Modificacion_BDD().traducir_excel()
+    Modificacion_BDD().agregar_tema()

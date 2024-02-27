@@ -58,9 +58,9 @@ class Add_question(Popup):
         super(Add_question,self).__init__(**kwargs)
 
         mainframe = BoxLayout(orientation="vertical", padding="5dp")
-        question_label = Label(text="Ingrese los datos")
-        question_set = Label(text="Ingrese su pregunta")
-        question = TextInput()
+        question_label = Label(text="Ingrese los datos", size_hint=[1,0.2])
+        question_set = Label(text="Ingrese su pregunta", size_hint=[1,.2])
+        question = TextInput(size_hint=[1,.2])
         mainframe.add_widget(question_label)
         mainframe.add_widget(question_set)
         mainframe.add_widget(question)
@@ -85,14 +85,14 @@ class File_explorer(Popup): #Explorador de archivos - Se debe corregir el tamañ
         mainframe = BoxLayout(orientation="vertical", padding="5dp")
         self.direction = TextInput(size_hint=[1,None],height="30dp")
         self.direction.bind(text=self.actual_path)
-        self.fichero = FileChooserIconView(size_hint=[1,2.5], dirselect=True) # Se cambio el sector Y por 2
+        self.fichero = FileChooserIconView(size_hint=[1,4.5], dirselect=True) # Se cambio el sector Y por 3.5
         self.fichero.path = os.path.expanduser("~\\Onedrive\\Desktop")
         self.fichero.bind(selection=self.selected_path)
         subframe = BoxLayout()
         self.selected = TextInput(multiline=False, size_hint=[.8, None], height="30dp")
         send = Button(text="Seleccionar" ,size_hint=[.2, None], height="30dp")
         send.bind(on_release=self.send_path)
-        subframe.add_widget(Label(text="Achivo: ", size_hint=[.3,None], height="30dp"))
+        subframe.add_widget(Label(text="Archivo: ", size_hint=[.3,None], height="30dp"))
         subframe.add_widget(self.selected)
         subframe.add_widget(send)
         mainframe.add_widget(self.direction)
@@ -130,27 +130,30 @@ class CRUD(Screen):
         popup.title = widget.text
         tantrum = BoxLayout(orientation="vertical")
         lower = BoxLayout(spacing="1dp", padding="1dp", size_hint_y=(0.1))
-        accion = Button(background_normal="", background_color=hexed("#6644ff"), color=hexed("#00e6bf"))
-        salir = Button(text="Cancelar",background_normal="", background_color=hexed("#6644ff"), color=hexed("#00e6bf"))
+        accion = Button(background_normal="", background_color=hexed("#6644ff"), color=hexed("#00e6bf"),
+                        size_hint=[.5,None], height="60dp")
+        salir = Button(text="Cancelar",background_normal="", background_color=hexed("#6644ff"), color=hexed("#00e6bf"),
+                       size_hint=[.5,None],height="60dp")
         lower.add_widget(accion)
         lower.add_widget(salir)
         salir.bind(on_press=popup.dismiss)
         if self.widgets[0] == widget or self.widgets[1] == widget:
-            tantrum.add_widget(Label(text="Ingrese el tema", size_hint=[None,0.3], halign="center"))
-            getter = TextInput(size_hint=(None, 0.1), halign="center")
+            tantrum.add_widget(Label(text="Ingrese el tema", size_hint=[.7,None], height="60dp", pos_hint={"center_x":.5}))
+            getter = TextInput(size_hint=(.7, None), height="130dp", pos_hint={"center_x":.5})
             tantrum.add_widget(getter)
-            if self.widgets[0] == widget: # Añadir tema - programado - probado
+            if self.widgets[0] == widget: # Añadir tema - programado - Probado
                 accion.text = "Ingresar"
                 def función(*args):
-                    Modificacion_BDD().agregar_tema(getter.text)
+                    BDD.agregar_tema(getter.text)
                     popup.dismiss()
-            elif self.widgets[1] == widget: # Buscar tema - programado - probado
+                accion.bind(on_release=función)
+            elif self.widgets[1] == widget: # Buscar tema - programado - Probado
                 accion.text = "Buscar"
                 encuentro = Label(text="...Esperando ingreso...")
                 tantrum.add_widget(encuentro)
                 def función(*args):
                     coincidencias = []
-                    temas = Modificacion_BDD().temas
+                    temas = BDD.temas
                     for a in temas:
                         if getter.text in a:
                             coincidencias.append(a)
@@ -158,51 +161,73 @@ class CRUD(Screen):
                         encuentro.text= "Coincdencias: 0"
                     else:    
                         encuentro.text = "Encontrados: \n" + ",\n".join(coincidencias)
-            getter.bind(text=función)
+                getter.bind(text=función)
             popup.content = tantrum
         else:
             temas = BDD.temas
-            selector = Spinner(text="Seleccione su tema", values=temas,
+            selector = Spinner(text="Seleccione su tema", values=temas,padding="10dp",
                                 background_normal="", background_color=hexed("#00cfff"),color=hexed("#6644ff"),
-                                size_hint=[.5,None], height="30dp",sync_height=True,
+                                size_hint=[.5,None], height="80dp",sync_height=True,
                                 pos_hint={"center_x":.5})
             tantrum.add_widget(selector)
             if self.widgets[2] == widget: #Modificar tema - programado - no probado
-                getter = TextInput(size_hint=(None,0.1), halign="center")
+                getter = TextInput(size_hint=(.7,None), height="60dp", pos_hint={"center_x":.5}, disabled=True)
                 accion.text="Modificar"
                 tantrum.add_widget(getter)
-                def modif():
+                def modif(*args):
                     BDD.editar_tema(selector.text, getter.text)
+                    popup.dismiss()
+                selector.bind(text=lambda *a: getter.setter("disabled")(getter,False))
                 accion.bind(on_release=modif)
             elif self.widgets[3] == widget: #Eliminar tema - Programado - No probado
                 accion.text="Eliminar"
-                def elimi():
+                accion.disabled = True
+                def elimi(*args):
                     BDD.borrar_tema(selector.text)
+                    popup.dismiss()
+                selector.bind(text= lambda *x: accion.setter("disabled")(accion,False))
                 accion.bind(on_release=elimi)
+
+            # -------------------------- Seccion de preguntas --------------------------
+
             elif self.widgets[4] == widget:
                 Add_question(size_hint=[None,None], size=[500,700]).open()
             elif self.widgets[5] == widget:  #Buscar preguntas - en proceso
-                getter = TextInput(size_hint=(None, 0.1))
+                getter = TextInput(size_hint=(.7, 0.1), disabled=True, pos_hint={"center_x":0.5})
                 accion.text = "Detalles"
                 encuentro = Label(text="...Esperando ingreso...")
+                tantrum.add_widget(getter)
                 tantrum.add_widget(encuentro)
+                popup.width = 700
                 def función_prep(*args):
                     coincidencias = []
-                    temas = Modificacion_BDD().preguntasDelTema(selector.text)
-                    for a in temas:
-                        if getter.text in a:
-                            coincidencias.append(a)
+                    preguntas = BDD.preguntasDelTema(selector.text)
+                    for a in preguntas:
+                        if getter.text in a["pregunta"]:
+                            coincidencias.append(a["pregunta"])
                     if coincidencias.count == 0 or getter.text == "":
                         encuentro.text= "Coincdencias: 0"
                     else:    
                         encuentro.text = "Encontrados: \n" + ",\n".join(coincidencias)
+                selector.bind(text=lambda *a: getter.setter("disabled")(getter,False))
                 getter.bind(text=función_prep)
+                getter.text_size = [popup.text_size[0], ]
             elif "Modificar" in widget.text:
                 pass
             elif "Eliminar" in widget.text:
-                pass
+                accion.disabled = True
+                selector_2 = Spinner(text= "- sin selección -", disabled=True, size_hint=[2,1],
+                                      padding="80dp")
+                tantrum.add_widget(selector_2)
+                def selecto(*args):
+                    preguntas = BDD.preguntasDelTema(selector.text)
+                    selector_2.values = preguntas
+                    selector_2.disabled = False
+                    accion.disabled = False
+                selector.bind(text=selecto)
+                accion.text = "Eliminar"
+                accion.bind(on_release= lambda *x:BDD.borrar_pregunta(selector.text,selector_2.text))
             popup.content = tantrum
-
         tantrum.add_widget(lower)
         popup.open()
 
@@ -284,7 +309,7 @@ class Menu(Screen):
         titulo_tema = Label(text="Elija su tema:", color=hexed("#000066"), size_hint=[1,.2], font_size="30dp")
         self.elegidor_tema = GridLayout(cols=3, spacing="5dp")
         self.elegido = []
-        for a in self.temas:
+        for a in BDD.temas:
             boton = Button(text="{}".format(a), color=hexed("#6644ff"), background_normal="", background_color=hexed("#ffbb33"),
                            size_hint=[1, None], height="90dp", font_size="40dp")
             boton.bind(on_release=self.pintar)
@@ -360,7 +385,7 @@ class Menu(Screen):
         for a in self.elegido:
             if a.color == hexed("#ffbb33"):
                 patata = a.text
-        preguntas = Modificacion_BDD().preguntasDelTema(patata)
+        preguntas = BDD.preguntasDelTema(patata)
         ying = []
         yang = []
         equilibrium = {}
