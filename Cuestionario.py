@@ -23,7 +23,7 @@ import inspect
 
 LabelBase.register(name="rubik",fn_regular="recursos/fonts/Rubik/Rubik-Regular.ttf")
 
-#Experimento actual: 
+#Experimento actual: Crear una función crud ramificada eficiente y efectiva usando iteraciones
 #Experimento logrado: Popups de un Popup
 #Experimento logrado: cambiar el color del fondo de todas las pantallas
 #Experimento logrado: iterar creación de widgets
@@ -35,10 +35,24 @@ LabelBase.register(name="rubik",fn_regular="recursos/fonts/Rubik/Rubik-Regular.t
 
 BDD = Modificacion_BDD()
 
-def adapt_text_size(widget):
+def adapt_text_size(widget:object) -> int:
+    """
+    ocupar esta función cuando el widget donde se quiere ajustar el texto usa 'size_hint'
+    """
     screen_res = [win32api.GetSystemMetrics(0),win32api.GetSystemMetrics(1)]
-    text_size = []
+    text_size:list[int] = []
     text_size.append((widget.size_hint[0]-0.01)*screen_res[0])
+    return int(text_size[0])
+
+def adapt_text_sizeEB(widget:object, height:bool=False)-> list[int]:
+    """
+    Ocupar esta funcion cuando el widget usa 'size', 'width' o 'height'
+    """
+    text_size:list[int] = []
+    text_size.append(widget.width)
+    if height:
+        text_size.append(widget.height)
+        return text_size
     return int(text_size[0])
 
 def pophexed(hex_color:str):
@@ -48,44 +62,94 @@ def pophexed(hex_color:str):
         result.append(7*a)
     return result
 
-class Add_question(Popup):
-    current_frame = inspect.currentframe()
-    callframe = inspect.getouterframes(current_frame, 2)
-    father = callframe[1][3]
-    print(type(father))
-    widgets = []
-    def __init__(self, **kwargs):
-        super(Add_question,self).__init__(**kwargs)
+def Add_question(widget):
 
-        mainframe = BoxLayout(orientation="vertical", padding="5dp")
-        question_label = Label(text="Ingrese los datos", size_hint=[1,0.2])
-        question_set = Label(text="Ingrese su pregunta", size_hint=[1,.2])
-        question = TextInput(size_hint=[1,.2])
-        mainframe.add_widget(question_label)
-        mainframe.add_widget(question_set)
-        mainframe.add_widget(question)
-        text = ["A", "B", "C"]
-        answers_box = GridLayout(cols=2)
-        mainframe.add_widget(answers_box)
-        for a in text:
-            label = Label(text=a, size_hint=[.5,None])
-            answer = TextInput()
-            answers_box.add_widget(label)
-            answers_box.add_widget(answer)
-            self.widgets.append(answer)
-        action = Button(text="Guardar")
-        salir = Button(text="Cancelar", on_release=self.dismiss)
-        answers_box.add_widget(action)
-        answers_box.add_widget(salir)
-        self.add_widget(mainframe)
-class File_explorer(Popup): #Explorador de archivos - Se debe corregir el tamaño
+    def pintar(widgetr):
+        if widgetr.color == hexed("#6644ff"):
+            for a in widgets[slice(0, 7, 2)]:
+                a.color = hexed("#6644ff")
+                a.background_color = hexed("#ffbb33")
+            widgetr.color = hexed("#ffbb33")
+            widgetr.background_color = hexed("#6644ff")
+        else:
+            widgetr.color = hexed("#6644ff")
+            widgetr.background_color = hexed("#ffbb33")
+    
+    widgets:list[object] = []
+    poppings = Popup(size_hint=[None,None], size=[700,700])
+    mainframe = BoxLayout(orientation="vertical", padding="5dp")
+    poppings.title = "Ingrese los datos"
+    question_set = Label(text="Ingrese su pregunta", size_hint=[1,.2])
+    question = TextInput(size_hint=[1,.2])
+    mainframe.add_widget(question_set)
+    mainframe.add_widget(question)
+    text = ["A - ", "B - ", "C - "]
+    answers_box = GridLayout(cols=2)
+    mainframe.add_widget(answers_box)
+    action = Button(text="Guardar", disabled=True)
+    action.disabled=True
+    for a in text:
+        label = Button(text=a, size_hint=[.5,None], color=hexed("#6644ff"), background_color = hexed("#ffbb33"),
+                       pos_hint={"center_x":.5,"center_y":.5})
+        label.bind(on_release=pintar)
+        label.bind(on_release=lambda *x: action.setter("disabled")(action,False))
+        answer = TextInput(size_hint=[1,None], height="80dp", pos_hint={"center_x":.5,"center_y":.5}, hint_text="respuesta")
+        answers_box.add_widget(label)
+        answers_box.add_widget(answer)
+        widgets.append(label)
+        widgets.append(answer)
+    if widget.text == "Modificar":
+        temardo = App.get_running_app().managersc.get_screen(name="gestion").selector.text
+        preguntas = BDD.preguntasDelTema(temardo)
+        preguntardo = App.get_running_app().managersc.get_screen(name="gestion").selector_2.text
+        for a in preguntas:
+            if preguntardo == a["pregunta"]:
+                for b,c in zip(widgets[slice(1,7,2)], a["respuestas"]):
+                    b.hint_text = c
+                break
+    def calaca(*args):
+        if widget.text == "Modificar":
+            temardo:str = App.get_running_app().managersc.get_screen(name="gestion").selector.text
+            answers:list[str] = []
+            for a,b in zip(widgets[slice(0,7,2)],widgets[slice(1,7,2)]):
+                if a.color == hexed("#ffbb33"):
+                    question_answer:str = a.text + b.text
+                if b.text:
+                    answers.append(a.text + b.text)
+                else:
+                    answers.append(a.text + b.hint_text)
+            print(answers)
+            new_question: dict = {"pregunta":question.text,"respuesta_correcta":question_answer, "respuestas":answers}
+            print(new_question)
+            BDD.editar_pregunta(temardo, new_question)
+        else:
+            temardo:str = App.get_running_app().managersc.get_screen(name="gestion").selector.text
+            answers:list[str] = []
+            for a,b in zip(widgets[slice(0,7,2)],widgets[slice(1,7,2)]):
+                if a.color == hexed("#ffbb33"):
+                    question_answer:str = a.text + b.text
+
+                answers.append(a.text + b.text)
+            print(answers)
+            new_question: dict = {"pregunta":question.text,"respuesta_correcta":question_answer, "respuestas":answers}
+            print(new_question)
+            BDD.agregar_pregunta(temardo, new_question)
+        poppings.dismiss()
+    action.bind(on_release=calaca)
+    salir = Button(text="Cancelar", on_release=poppings.dismiss)
+    answers_box.add_widget(action)
+    answers_box.add_widget(salir)
+    poppings.add_widget(mainframe)
+    poppings.open()
+class File_explorer(Popup): #Explorador de archivos
     def __init__(self, **kwargs):
         super(File_explorer, self).__init__(**kwargs)
 
+        self.title = "Buscador de archivos"
         mainframe = BoxLayout(orientation="vertical", padding="5dp")
         self.direction = TextInput(size_hint=[1,None],height="30dp")
         self.direction.bind(text=self.actual_path)
-        self.fichero = FileChooserIconView(size_hint=[1,4.5], dirselect=True) # Se cambio el sector Y por 3.5
+        self.fichero = FileChooserIconView(size_hint=[1,5], dirselect=True) # Se cambio el sector Y por 3.5
         self.fichero.path = os.path.expanduser("~\\Onedrive\\Desktop")
         self.fichero.bind(selection=self.selected_path)
         subframe = BoxLayout()
@@ -122,7 +186,7 @@ class CRUD(Screen):
 
     def gestionar(self, widget):
         """
-        Este es el widget más complejo de toda la app, contiene 8 popups en su interior; un movimiento en falso y puede darte interrminables
+        Este es el widget más complejo de toda la app, contiene 1 popup en su interior, que se modifica de acuerdo a que botón fue oprimido; un movimiento en falso y puede darte interrminables
         errores, dependiendo del widget que llame esta función se ejecutara de diferentes maneras, identifica el widget gracias a su posición
         en la lista "widgets"
         """
@@ -137,9 +201,11 @@ class CRUD(Screen):
         lower.add_widget(accion)
         lower.add_widget(salir)
         salir.bind(on_press=popup.dismiss)
+        # ------------------------------ Sección de temas -------------------------------------
+        # Funcionalidades al 100%, se requieren correciones de UI
         if self.widgets[0] == widget or self.widgets[1] == widget:
             tantrum.add_widget(Label(text="Ingrese el tema", size_hint=[.7,None], height="60dp", pos_hint={"center_x":.5}))
-            getter = TextInput(size_hint=(.7, None), height="130dp", pos_hint={"center_x":.5})
+            getter = TextInput(size_hint=(.7, None), height="70dp", pos_hint={"center_x":.5})
             tantrum.add_widget(getter)
             if self.widgets[0] == widget: # Añadir tema - programado - Probado
                 accion.text = "Ingresar"
@@ -162,46 +228,54 @@ class CRUD(Screen):
                     else:    
                         encuentro.text = "Encontrados: \n" + ",\n".join(coincidencias)
                 getter.bind(text=función)
+                encuentro.bind(text=lambda *x: encuentro.setter("text_size")(encuentro,adapt_text_sizeEB()))
             popup.content = tantrum
         else:
             temas = BDD.temas
-            selector = Spinner(text="Seleccione su tema", values=temas,padding="10dp",
+            self.selector = Spinner(text="Seleccione su tema", values=temas, padding="10dp",
                                 background_normal="", background_color=hexed("#00cfff"),color=hexed("#6644ff"),
-                                size_hint=[.5,None], height="80dp",sync_height=True,
+                                size_hint=[.5,None], height="60dp",sync_height=True,
                                 pos_hint={"center_x":.5})
-            tantrum.add_widget(selector)
-            if self.widgets[2] == widget: #Modificar tema - programado - no probado
+            tantrum.add_widget(self.selector)
+            if self.widgets[2] == widget: #Modificar tema - programado - Probado
                 getter = TextInput(size_hint=(.7,None), height="60dp", pos_hint={"center_x":.5}, disabled=True)
                 accion.text="Modificar"
                 tantrum.add_widget(getter)
                 def modif(*args):
-                    BDD.editar_tema(selector.text, getter.text)
+                    BDD.editar_tema(self.selector.text, getter.text)
                     popup.dismiss()
-                selector.bind(text=lambda *a: getter.setter("disabled")(getter,False))
+                self.selector.bind(text=lambda *a: getter.setter("disabled")(getter,False))
                 accion.bind(on_release=modif)
-            elif self.widgets[3] == widget: #Eliminar tema - Programado - No probado
+            elif self.widgets[3] == widget: #Eliminar tema - Programado - Probado
                 accion.text="Eliminar"
                 accion.disabled = True
                 def elimi(*args):
-                    BDD.borrar_tema(selector.text)
+                    BDD.borrar_tema(self.selector.text)
                     popup.dismiss()
-                selector.bind(text= lambda *x: accion.setter("disabled")(accion,False))
+                self.selector.bind(text= lambda *x: accion.setter("disabled")(accion,False))
                 accion.bind(on_release=elimi)
 
             # -------------------------- Seccion de preguntas --------------------------
-
+            # Funcionalidades Buscar y Eliminar al 100%, se requieren correcciones de UI y
+            # se busca agregar las funciones Añadir y Modificar
             elif self.widgets[4] == widget:
-                Add_question(size_hint=[None,None], size=[500,700]).open()
+                popup.size_hint = [None, .3]
+                accion.text = "Añadir"
+                accion.disabled = True
+                self.selector.bind(text= lambda *x: accion.setter("disabled")(accion, False))
+                accion.bind(on_release= Add_question)
+                
             elif self.widgets[5] == widget:  #Buscar preguntas - en proceso
                 getter = TextInput(size_hint=(.7, 0.1), disabled=True, pos_hint={"center_x":0.5})
                 accion.text = "Detalles"
                 encuentro = Label(text="...Esperando ingreso...")
                 tantrum.add_widget(getter)
                 tantrum.add_widget(encuentro)
-                popup.width = 700
+                popup.size_hint = [.7,.8]
+                popup.pos_hint = {"center_y":.5}
                 def función_prep(*args):
                     coincidencias = []
-                    preguntas = BDD.preguntasDelTema(selector.text)
+                    preguntas = BDD.preguntasDelTema(self.selector.text)
                     for a in preguntas:
                         if getter.text in a["pregunta"]:
                             coincidencias.append(a["pregunta"])
@@ -209,24 +283,40 @@ class CRUD(Screen):
                         encuentro.text= "Coincdencias: 0"
                     else:    
                         encuentro.text = "Encontrados: \n" + ",\n".join(coincidencias)
-                selector.bind(text=lambda *a: getter.setter("disabled")(getter,False))
+                self.selector.bind(text=lambda *a: getter.setter("disabled")(getter,False))
                 getter.bind(text=función_prep)
-                getter.text_size = [popup.text_size[0], ]
+                getter.text_size = [adapt_text_sizeEB(popup), ]
             elif "Modificar" in widget.text:
-                pass
-            elif "Eliminar" in widget.text:
+                popup.size_hint = [None, .5]
+                popup.width = "600dp"
                 accion.disabled = True
-                selector_2 = Spinner(text= "- sin selección -", disabled=True, size_hint=[2,1],
-                                      padding="80dp")
-                tantrum.add_widget(selector_2)
+                self.selector_2 = Spinner(text= "- sin selección -", disabled=True, size_hint=[1,None],
+                                      padding="10dp", pos_hint={"center_x":.5}, height="40dp")
+                tantrum.add_widget(self.selector_2)
                 def selecto(*args):
-                    preguntas = BDD.preguntasDelTema(selector.text)
-                    selector_2.values = preguntas
-                    selector_2.disabled = False
+                    preguntas = BDD.preguntasDelTema(self.selector.text)
+                    opciones:list = [a["pregunta"] for a in preguntas]
+                    self.selector_2.values = opciones
+                    self.selector_2.disabled = False
+                self.selector.bind(text=selecto)
+                self.selector_2.bind(text= lambda *x: accion.setter("disabled")(accion,False))
+                accion.text = "Modificar"
+                accion.bind(on_release= Add_question and popup.dismiss)
+            elif "Eliminar" in widget.text:
+                popup.width = "600dp"
+                accion.disabled = True
+                self.selector_2 = Spinner(text= "- sin selección -", disabled=True, size_hint=[1,None],
+                                      padding="10dp", pos_hint={"center_x":.5}, height="40dp")
+                tantrum.add_widget(self.selector_2)
+                def selecto(*args):
+                    preguntas = BDD.preguntasDelTema(self.selector.text)
+                    opciones:list = [a["pregunta"] for a in preguntas]
+                    self.selector_2.values = opciones
+                    self.selector_2.disabled = False
                     accion.disabled = False
-                selector.bind(text=selecto)
+                self.selector.bind(text=selecto)
                 accion.text = "Eliminar"
-                accion.bind(on_release= lambda *x:BDD.borrar_pregunta(selector.text,selector_2.text))
+                accion.bind(on_release= lambda *x:BDD.borrar_pregunta(self.selector.text,self.selector_2.text))
             popup.content = tantrum
         tantrum.add_widget(lower)
         popup.open()
@@ -465,7 +555,7 @@ class Menu(Screen):
 class Quizz(Screen):
   
     salir = Button(text="Volver", background_color=hexed("#de3090"),background_normal="", color=hexed("#ffbb33"),
-                   size_hint=[.2,None], size=["60dp","60dp"],
+                   size_hint=[.2,None], size=["60dp","60dp"], font_size="40dp",
                    pos_hint={"right":1})
 
     def resize(self, widget, text):

@@ -89,7 +89,6 @@ class Modificacion_BDD():
                 alpha["preguntas"].append(pregunta)
                 with open("recursos/data/preguntas.json", "w") as file:
                     json.dump(self.obj, file)
-                print(self.obj)
                 break
         self.reload()
     
