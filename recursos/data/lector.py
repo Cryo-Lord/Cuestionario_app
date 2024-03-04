@@ -33,7 +33,6 @@ class Modificacion_BDD():
             for a in self.obj:
                 pregunta={"pregunta":list[1],"respuesta_correcta":list[-1],"respuestas":[list[2],list[3],list[4]]}
                 if list[0] == a["tema"]:
-                    print(a["tema"])
                     if pregunta in a["preguntas"]:
                         print("pregunta ya incluida")
                         break
@@ -61,7 +60,6 @@ class Modificacion_BDD():
     def agregar_tema(self, tema): #probado
         data = {"tema":tema, "preguntas":[]}
         self.obj.append(data)
-        print(data)
         with open("recursos/data/preguntas.json", "w") as file:
             json.dump(self.obj, file)
         self.reload()
@@ -87,6 +85,7 @@ class Modificacion_BDD():
         for alpha in self.obj:
             if alpha["tema"] == tema:
                 alpha["preguntas"].append(pregunta)
+                print(alpha)
                 with open("recursos/data/preguntas.json", "w") as file:
                     json.dump(self.obj, file)
                 break
@@ -94,11 +93,8 @@ class Modificacion_BDD():
     
     def editar_pregunta(self, tema:str, pregunta:str, pregunta_new:dict):
         for alpha in self.obj: #revisa cada elemento de la base de datos
-            print("buscando tema")
             if alpha["tema"] == tema: #comprueba si el tema coincide
-                print("tema coincidente")
                 for a in alpha["preguntas"]: #revisa cada pregunta del tema
-                    print("buscando pregunta")
                     if a["pregunta"] == pregunta: #verifica que la pregunta coincida con la que queremos modificar
                         print("pregunta encontrada")
                         for beta in pregunta_new.keys():
@@ -107,7 +103,7 @@ class Modificacion_BDD():
                         break
                 break
         with open("recursos/data/preguntas.json", "w") as file:
-                    json.dump(self.obj, file)
+            json.dump(self.obj, file)
 
     def borrar_pregunta(self, tema:str, pregunta:str): #probado
         for alpha in self.obj:
@@ -115,10 +111,9 @@ class Modificacion_BDD():
                 for beta in alpha["preguntas"]:
                     if beta["pregunta"] == pregunta:
                         alpha["preguntas"].remove(beta)
-                        with open("recursos/data/preguntas.json", "w") as file:
-                            json.dump(self.obj, file)
-                    break
-            break
-
+                        break                      
+                break
+        with open("recursos/data/preguntas.json", "w") as file:
+            json.dump(self.obj, file)
 if __name__ == "__main__":
-    Modificacion_BDD().agregar_tema()
+    Modificacion_BDD().borrar_pregunta("Prueba","Pregunta_4")

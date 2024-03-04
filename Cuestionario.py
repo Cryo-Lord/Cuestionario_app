@@ -90,7 +90,7 @@ def Add_question(widget):
     action.disabled=True
     for a in text:
         label = Button(text=a, size_hint=[.5,None], color=hexed("#6644ff"), background_color = hexed("#ffbb33"),
-                       pos_hint={"center_x":.5,"center_y":.5})
+                       pos_hint={"center_x":.5,"center_y":.5}, background_normal="")
         label.bind(on_release=pintar)
         label.bind(on_release=lambda *x: action.setter("disabled")(action,False))
         answer = TextInput(size_hint=[1,None], height="80dp", pos_hint={"center_x":.5,"center_y":.5}, hint_text="respuesta")
@@ -102,26 +102,34 @@ def Add_question(widget):
         temardo = App.get_running_app().managersc.get_screen(name="gestion").selector.text
         preguntas = BDD.preguntasDelTema(temardo)
         preguntardo = App.get_running_app().managersc.get_screen(name="gestion").selector_2.text
+        question.hint_text = preguntardo
         for a in preguntas:
             if preguntardo == a["pregunta"]:
                 for b,c in zip(widgets[slice(1,7,2)], a["respuestas"]):
-                    b.hint_text = c
+                    texting = c.split(" - ")
+                    b.hint_text = texting[1]
                 break
     def calaca(*args):
         if widget.text == "Modificar":
             temardo:str = App.get_running_app().managersc.get_screen(name="gestion").selector.text
             answers:list[str] = []
+            if question.text:
+                questioner = question.text
+            else:
+                questioner = question.hint_text
             for a,b in zip(widgets[slice(0,7,2)],widgets[slice(1,7,2)]):
                 if a.color == hexed("#ffbb33"):
-                    question_answer:str = a.text + b.text
+                    if b.text:
+                        question_answer:str = a.text + b.text
+                    else:
+                        question_answer:str = a.text + b.hint_text
                 if b.text:
                     answers.append(a.text + b.text)
                 else:
                     answers.append(a.text + b.hint_text)
-            print(answers)
-            new_question: dict = {"pregunta":question.text,"respuesta_correcta":question_answer, "respuestas":answers}
+            new_question:dict = {"pregunta":questioner,"respuesta_correcta":question_answer, "respuestas":answers}
             print(new_question)
-            BDD.editar_pregunta(temardo, new_question)
+            BDD.editar_pregunta(temardo, question.hint_text, new_question)
         else:
             temardo:str = App.get_running_app().managersc.get_screen(name="gestion").selector.text
             answers:list[str] = []
@@ -156,6 +164,7 @@ class File_explorer(Popup): #Explorador de archivos
         self.selected = TextInput(multiline=False, size_hint=[.8, None], height="30dp")
         send = Button(text="Seleccionar" ,size_hint=[.2, None], height="30dp")
         send.bind(on_release=self.send_path)
+        send.bind(on_release=self.dismiss)
         subframe.add_widget(Label(text="Archivo: ", size_hint=[.3,None], height="30dp"))
         subframe.add_widget(self.selected)
         subframe.add_widget(send)
@@ -201,22 +210,26 @@ class CRUD(Screen):
         lower.add_widget(accion)
         lower.add_widget(salir)
         salir.bind(on_press=popup.dismiss)
+
         # ------------------------------ Sección de temas -------------------------------------
-        # Funcionalidades al 100%, se requieren correciones de UI
+
         if self.widgets[0] == widget or self.widgets[1] == widget:
             tantrum.add_widget(Label(text="Ingrese el tema", size_hint=[.7,None], height="60dp", pos_hint={"center_x":.5}))
             getter = TextInput(size_hint=(.7, None), height="70dp", pos_hint={"center_x":.5})
             tantrum.add_widget(getter)
             if self.widgets[0] == widget: # Añadir tema - programado - Probado
                 accion.text = "Ingresar"
+                popup.size_hint = [None, .3]
                 def función(*args):
                     BDD.agregar_tema(getter.text)
                     popup.dismiss()
                 accion.bind(on_release=función)
             elif self.widgets[1] == widget: # Buscar tema - programado - Probado
                 accion.text = "Buscar"
-                encuentro = Label(text="...Esperando ingreso...")
+                encuentro = Label(text="...Esperando ingreso...", pos_hint={"center_x":.5})
                 tantrum.add_widget(encuentro)
+                popup.size_hint = [.7,.6]
+                popup.pos_hint = {"center_y":.5}
                 def función(*args):
                     coincidencias = []
                     temas = BDD.temas
@@ -228,7 +241,7 @@ class CRUD(Screen):
                     else:    
                         encuentro.text = "Encontrados: \n" + ",\n".join(coincidencias)
                 getter.bind(text=función)
-                encuentro.bind(text=lambda *x: encuentro.setter("text_size")(encuentro,adapt_text_sizeEB()))
+                encuentro.text_size = [adapt_text_sizeEB(popup),None]
             popup.content = tantrum
         else:
             temas = BDD.temas
@@ -240,6 +253,7 @@ class CRUD(Screen):
             if self.widgets[2] == widget: #Modificar tema - programado - Probado
                 getter = TextInput(size_hint=(.7,None), height="60dp", pos_hint={"center_x":.5}, disabled=True)
                 accion.text="Modificar"
+                popup.size_hint = [None, .3]
                 tantrum.add_widget(getter)
                 def modif(*args):
                     BDD.editar_tema(self.selector.text, getter.text)
@@ -248,6 +262,7 @@ class CRUD(Screen):
                 accion.bind(on_release=modif)
             elif self.widgets[3] == widget: #Eliminar tema - Programado - Probado
                 accion.text="Eliminar"
+                popup.size_hint = [None, .3]
                 accion.disabled = True
                 def elimi(*args):
                     BDD.borrar_tema(self.selector.text)
@@ -256,19 +271,19 @@ class CRUD(Screen):
                 accion.bind(on_release=elimi)
 
             # -------------------------- Seccion de preguntas --------------------------
-            # Funcionalidades Buscar y Eliminar al 100%, se requieren correcciones de UI y
-            # se busca agregar las funciones Añadir y Modificar
+
             elif self.widgets[4] == widget:
                 popup.size_hint = [None, .3]
                 accion.text = "Añadir"
                 accion.disabled = True
                 self.selector.bind(text= lambda *x: accion.setter("disabled")(accion, False))
                 accion.bind(on_release= Add_question)
+                accion.bind(on_release= popup.dismiss)
                 
             elif self.widgets[5] == widget:  #Buscar preguntas - en proceso
                 getter = TextInput(size_hint=(.7, 0.1), disabled=True, pos_hint={"center_x":0.5})
                 accion.text = "Detalles"
-                encuentro = Label(text="...Esperando ingreso...")
+                encuentro = Label(text="...Esperando ingreso...", pos_hint={"center_x":.5})
                 tantrum.add_widget(getter)
                 tantrum.add_widget(encuentro)
                 popup.size_hint = [.7,.8]
@@ -285,9 +300,9 @@ class CRUD(Screen):
                         encuentro.text = "Encontrados: \n" + ",\n".join(coincidencias)
                 self.selector.bind(text=lambda *a: getter.setter("disabled")(getter,False))
                 getter.bind(text=función_prep)
-                getter.text_size = [adapt_text_sizeEB(popup), ]
+                encuentro.text_size = [adapt_text_sizeEB(popup), None]
             elif "Modificar" in widget.text:
-                popup.size_hint = [None, .5]
+                popup.size_hint = [None, .3]
                 popup.width = "600dp"
                 accion.disabled = True
                 self.selector_2 = Spinner(text= "- sin selección -", disabled=True, size_hint=[1,None],
@@ -301,9 +316,11 @@ class CRUD(Screen):
                 self.selector.bind(text=selecto)
                 self.selector_2.bind(text= lambda *x: accion.setter("disabled")(accion,False))
                 accion.text = "Modificar"
-                accion.bind(on_release= Add_question and popup.dismiss)
+                accion.bind(on_release= Add_question)
+                accion.bind(on_release= popup.dismiss)
             elif "Eliminar" in widget.text:
                 popup.width = "600dp"
+                popup.size_hint = [None, .3]
                 accion.disabled = True
                 self.selector_2 = Spinner(text= "- sin selección -", disabled=True, size_hint=[1,None],
                                       padding="10dp", pos_hint={"center_x":.5}, height="40dp")
@@ -317,6 +334,7 @@ class CRUD(Screen):
                 self.selector.bind(text=selecto)
                 accion.text = "Eliminar"
                 accion.bind(on_release= lambda *x:BDD.borrar_pregunta(self.selector.text,self.selector_2.text))
+                accion.bind(on_release=popup.dismiss)
             popup.content = tantrum
         tantrum.add_widget(lower)
         popup.open()
@@ -331,8 +349,8 @@ class CRUD(Screen):
     def use_path(self, widget):
         try:
             BDD.traducir_excel(self.ruta)
-        except:
-            Popup(title="Error", content=Label(text="Archivo o ruta no valida"), size_hint=[None,None], size=[300,200]).open()
+        except Exception as e:
+            Popup(title="Error", content=Label(text=f"Archivo o ruta no valida, \nError: {e}"), size_hint=[None,None], size=[500,200]).open()
 
     widgets = []
     def __init__(self, **kwargs):
@@ -346,13 +364,13 @@ class CRUD(Screen):
                         size_hint=[None,None],size=["60dp","60dp"],
                         pos_hint={"center_x":.9})
         volvere.bind(on_release=CuestionarioApp.menu)
+        volvere.bind(on_release= lambda *x: Popup(title="Aviso", content=Label(text="Los cambios se mostraran al reabrir la aplicación", font_size="30dp"), size_hint=[.3,.2]).open())
         self.main.add_widget(volvere)
-
         for a in cruds:
             texto = "Gestionar " + a
             self.main.add_widget(Label(text=texto, 
                                        size_hint=[None,.2], pos_hint={"center_x":.5}
-                                       ,color=hexed("#00e6bf")))
+                                       ,color=hexed("#ffbb33")))
             grid = GridLayout(cols=2, spacing="10dp", padding="15dp")
             self.main.add_widget(grid)
             for b in opciones:
@@ -366,7 +384,6 @@ class CRUD(Screen):
         self.excelsior = Button(text=f"Cargar excel: '{self.ruta}' ", size_hint=[.7,None], pos_hint={"center_x":.5}, halign="center")
         self.excelsior.text_size = (adapt_text_size(self.excelsior),None)
         self.excelsior.bind(on_release=self.use_path)
-        #self.excelsior.bind(width=lambda *x: self.excelsior.setter('text_size')(self.excelsior, (self.excelsior.width, None)))
         selector = Button(text="Buscar Archivo", size_hint=[.7,None], pos_hint={"center_x":.5})
         selector.bind(on_release=self.file_explorer)
         self.main.add_widget(self.excelsior)        
@@ -380,11 +397,9 @@ class Menu(Screen):
         self.temas = BDD.temas
 
         parent = BoxLayout(orientation="vertical", spacing="5dp",padding="5dp")
-        titulo_app = Label(text="Concurso", color=hexed("#6644ff"), font_size="120dp",
-                           size_hint=[1,None])
         sup = BoxLayout(orientation="horizontal", size_hint=[1,None])
         sup.add_widget(AsyncImage(source="recursos/img/B- isologo municipal y comunal unidos/dgdd_logo.png",
-                                  size_hint=[.1,3], pos_hint={"center_y":0}, fit_mode="contain"))
+                                  size_hint=[.1,3], pos_hint={"center_y":-0.1}, fit_mode="contain"))
         sup.add_widget(Label(size_hint=[.8,None]))
         agregar = Button(text="+", background_normal="", background_color=hexed("#6644ff"), color=hexed("#00e6bf"),
                          size_hint=[None,None], size=["60dp","60dp"])
@@ -392,10 +407,9 @@ class Menu(Screen):
         
         sup.add_widget(agregar)
         parent.add_widget(sup)
-        #parent.add_widget(titulo_app)
-        parent.add_widget(AsyncImage(source="recursos/img/Emerson-01.png", size=["70dp","70dp"]))
+        parent.add_widget(AsyncImage(source="recursos/img/Emerson-01.png", size=["50dp","50dp"]))
         
-        caja_tema = BoxLayout(orientation="vertical", size_hint=[.9, .9], pos_hint={"center_x":.5})
+        caja_tema = BoxLayout(orientation="vertical", size_hint=[.9, 1], pos_hint={"center_x":.5,"center_y":1})
         titulo_tema = Label(text="Elija su tema:", color=hexed("#000066"), size_hint=[1,.2], font_size="30dp")
         self.elegidor_tema = GridLayout(cols=3, spacing="5dp")
         self.elegido = []
@@ -541,7 +555,7 @@ class Menu(Screen):
             if passw.text == "" and user.text == "":
                 Popup(title="Faltan datos", content=Label(text="Por favor, rellene los datos antes de continuar"),
                       size_hint=(None,None), size=(450,200)).open()
-            elif user.text != "a" or passw.text != "b":
+            elif user.text != "Administrador" or passw.text != "Cuestionario":
                 Popup(title="Datos incorrectos", content=Label(text="Usuario o contraseña incorrectos"),
                       size_hint=(None,None), size=[450,200]).open()
             else:
@@ -643,7 +657,6 @@ class Quizz(Screen):
                 self.preguntas.pop(0)
                 self.progreso.value += 1
             except:
-                #self.preguntas = []
                 App.get_running_app().menu()
         elif response == False:
             pass
