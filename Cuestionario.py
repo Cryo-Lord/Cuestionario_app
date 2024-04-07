@@ -19,7 +19,6 @@ from kivy.core.text import LabelBase
 from kivy.uix.filechooser import FileChooserIconView
 from recursos.data.lector import Modificacion_BDD
 import random, os, win32api
-import inspect
 
 LabelBase.register(name="rubik",fn_regular="recursos/fonts/Rubik/Rubik-Regular.ttf")
 
